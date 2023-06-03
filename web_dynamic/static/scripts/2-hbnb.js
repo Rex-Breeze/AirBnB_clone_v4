@@ -1,30 +1,46 @@
+/*
+  script JavaScript that controls the API status:
+  - Request http://0.0.0.0:5001/api/v1/status/:
+    - If in the status is OK, add the class available to the DIV#api_status
+    - Otherwise, remove the class available to the DIV#api_status
+ */
 $(document).ready(function () {
-  $('input[type=checkbox]').click(function () {
-    const myListName = [];
-    const myId = [];
-    $('input[type=checkbox]:checked').each(function () {
-      myListName.push($(this).attr('data-name'));
-      myId.push($(this).attr('data-id'));
-    });
-    if (myListName.length === 0) {
-      $('.amenities h4').html('&nbsp;');
+  const amnt = {};
+  $('input:checkbox').change(function () {
+    const input = $(this)[0];
+    const id = input.dataset.id;
+    const name = input.dataset.name;
+
+    if ($(this).is(':checked')) {
+      amnt[id] = name;
     } else {
-      $('.amenities h4').text(myListName.join(', '));
+      delete amnt[id];
     }
-    console.log(myId);
+    let text = Object.values(amnt).toString().slice(0, 28);
+    text += text.length >= 28 ? '...' : '';
+    if (text === '') {
+      text = '&nbsp;';
+    }
+    $('#amnts_cheked').html(text);
   });
+
+  checkStatus();
 });
 
-$.ajax({
-  url: 'http://0.0.0.0:5001/api/v1/status/',
-  type: 'GET',
-  dataType: 'json',
-  success: function (json) {
-    $('#api_status').addClass('available');
-  },
-
-  error: function (xhr, status) {
-    console.log('error ' + status);
-  }
-
-});
+function checkStatus () {
+  $.ajax({
+    url: 'http://localhost:5001/api/v1/status/',
+    dataType: 'text',
+    success: function (data) {
+      const status = JSON.parse(data).status;
+      if (status !== 'OK') {
+        return;
+      }
+      if ($('#api_status').hasClass('available')) {
+        $('#api_status').removeClass('available');
+      } else {
+        $('#api_status').addClass('available');
+      }
+    }
+  });
+}
